@@ -50,6 +50,106 @@ function BancolombiaLogo() {
   return <img src="/image.png" alt="Bancolombia" className="h-8 w-auto" />;
 }
 
+function Field({
+  label,
+  field,
+  type = 'text',
+  placeholder,
+  icon: Icon,
+  filter,
+  maxLength,
+  inputMode,
+  form,
+  errors,
+  update,
+}: {
+  label: string;
+  field: keyof FormData;
+  type?: string;
+  placeholder?: string;
+  icon: typeof User;
+  filter?: (v: string) => string;
+  maxLength?: number;
+  inputMode?: 'none' | 'text' | 'decimal' | 'numeric' | 'tel' | 'search' | 'email' | 'url';
+  form: FormData;
+  errors: Partial<FormData>;
+  update: (field: keyof FormData, value: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label className="text-sm font-medium text-gray-700">{label}</label>
+      <div className="relative">
+        <Icon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+        <input
+          type={type}
+          inputMode={inputMode}
+          value={form[field]}
+          onChange={e => update(field, filter ? filter(e.target.value) : e.target.value)}
+          placeholder={placeholder}
+          maxLength={maxLength}
+          className={`w-full pl-10 pr-4 py-3 rounded-xl border text-sm outline-none transition-all focus:border-[#FFCC00] focus:ring-2 focus:ring-[#FFCC00]/20 ${
+            errors[field] ? 'border-red-400 bg-red-50' : 'border-gray-200 bg-gray-50'
+          }`}
+        />
+      </div>
+      {errors[field] && (
+        <p className="text-xs text-red-500 flex items-center gap-1">
+          <AlertCircle className="w-3 h-3" />
+          {errors[field]}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function SelectField({
+  label,
+  field,
+  options,
+  icon: Icon,
+  form,
+  errors,
+  update,
+}: {
+  label: string;
+  field: keyof FormData;
+  options: { value: string; label: string }[];
+  icon: typeof User;
+  form: FormData;
+  errors: Partial<FormData>;
+  update: (field: keyof FormData, value: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label className="text-sm font-medium text-gray-700">{label}</label>
+      <div className="relative">
+        <Icon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
+        <select
+          value={form[field]}
+          onChange={e => update(field, e.target.value)}
+          className={`w-full pl-10 pr-10 py-3 rounded-xl border text-sm outline-none transition-all appearance-none focus:border-[#FFCC00] focus:ring-2 focus:ring-[#FFCC00]/20 ${
+            errors[field] ? 'border-red-400 bg-red-50' : 'border-gray-200 bg-gray-50'
+          }`}
+        >
+          <option value="">Selecciona una opción</option>
+          {options.map(o => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+      </div>
+      {errors[field] && (
+        <p className="text-xs text-red-500 flex items-center gap-1">
+          <AlertCircle className="w-3 h-3" />
+          {errors[field]}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function CreditForm({ onClose }: { onClose: () => void }) {
   const [step, setStep] = useState<FormStep>(0);
   const [esCliente, setEsCliente] = useState<boolean | null>(null);
@@ -156,90 +256,6 @@ function CreditForm({ onClose }: { onClose: () => void }) {
     const c = (principal * tasa) / (1 - Math.pow(1 + tasa, -meses));
     return Math.round(c).toLocaleString('es-CO');
   };
-
-  const Field = ({
-    label,
-    field,
-    type = 'text',
-    placeholder,
-    icon: Icon,
-    filter,
-    maxLength,
-    inputMode,
-  }: {
-    label: string;
-    field: keyof FormData;
-    type?: string;
-    placeholder?: string;
-    icon: typeof User;
-    filter?: (v: string) => string;
-    maxLength?: number;
-    inputMode?: 'none' | 'text' | 'decimal' | 'numeric' | 'tel' | 'search' | 'email' | 'url';
-  }) => (
-    <div className="flex flex-col gap-1">
-      <label className="text-sm font-medium text-gray-700">{label}</label>
-      <div className="relative">
-        <Icon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-        <input
-          type={type}
-          inputMode={inputMode}
-          value={form[field]}
-          onChange={e => update(field, filter ? filter(e.target.value) : e.target.value)}
-          placeholder={placeholder}
-          maxLength={maxLength}
-          className={`w-full pl-10 pr-4 py-3 rounded-xl border text-sm outline-none transition-all focus:border-[#FFCC00] focus:ring-2 focus:ring-[#FFCC00]/20 ${
-            errors[field] ? 'border-red-400 bg-red-50' : 'border-gray-200 bg-gray-50'
-          }`}
-        />
-      </div>
-      {errors[field] && (
-        <p className="text-xs text-red-500 flex items-center gap-1">
-          <AlertCircle className="w-3 h-3" />
-          {errors[field]}
-        </p>
-      )}
-    </div>
-  );
-
-  const SelectField = ({
-    label,
-    field,
-    options,
-    icon: Icon,
-  }: {
-    label: string;
-    field: keyof FormData;
-    options: { value: string; label: string }[];
-    icon: typeof User;
-  }) => (
-    <div className="flex flex-col gap-1">
-      <label className="text-sm font-medium text-gray-700">{label}</label>
-      <div className="relative">
-        <Icon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
-        <select
-          value={form[field]}
-          onChange={e => update(field, e.target.value)}
-          className={`w-full pl-10 pr-10 py-3 rounded-xl border text-sm outline-none transition-all appearance-none focus:border-[#FFCC00] focus:ring-2 focus:ring-[#FFCC00]/20 ${
-            errors[field] ? 'border-red-400 bg-red-50' : 'border-gray-200 bg-gray-50'
-          }`}
-        >
-          <option value="">Selecciona una opción</option>
-          {options.map(o => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-      </div>
-      {errors[field] && (
-        <p className="text-xs text-red-500 flex items-center gap-1">
-          <AlertCircle className="w-3 h-3" />
-          {errors[field]}
-        </p>
-      )}
-    </div>
-  );
 
   if (showLogin) {
     const handleLoginContinue = () => {
@@ -1037,6 +1053,9 @@ function CreditForm({ onClose }: { onClose: () => void }) {
                   placeholder="Juan"
                   icon={User}
                   filter={v => v.replace(/[^a-záéíóúüñA-ZÁÉÍÓÚÜÑ\s]/g, '')}
+                  form={form}
+                  errors={errors}
+                  update={update}
                 />
                 <Field
                   label="Apellido"
@@ -1044,6 +1063,9 @@ function CreditForm({ onClose }: { onClose: () => void }) {
                   placeholder="Pérez"
                   icon={User}
                   filter={v => v.replace(/[^a-záéíóúüñA-ZÁÉÍÓÚÜÑ\s]/g, '')}
+                  form={form}
+                  errors={errors}
+                  update={update}
                 />
               </div>
               <Field
@@ -1054,6 +1076,9 @@ function CreditForm({ onClose }: { onClose: () => void }) {
                 filter={v => v.replace(/\D/g, '')}
                 maxLength={12}
                 inputMode="numeric"
+                form={form}
+                errors={errors}
+                update={update}
               />
               <Field
                 label="Teléfono celular"
@@ -1063,6 +1088,9 @@ function CreditForm({ onClose }: { onClose: () => void }) {
                 filter={v => v.replace(/\D/g, '')}
                 maxLength={10}
                 inputMode="numeric"
+                form={form}
+                errors={errors}
+                update={update}
               />
               <Field
                 label="Correo electrónico"
@@ -1071,6 +1099,9 @@ function CreditForm({ onClose }: { onClose: () => void }) {
                 placeholder="juan@correo.com"
                 icon={Mail}
                 inputMode="email"
+                form={form}
+                errors={errors}
+                update={update}
               />
             </div>
           ) : step === 2 ? (
@@ -1087,6 +1118,9 @@ function CreditForm({ onClose }: { onClose: () => void }) {
                   { value: '20000000', label: '$20.000.000' },
                   { value: '50000000', label: '$50.000.000' },
                 ]}
+                form={form}
+                errors={errors}
+                update={update}
               />
               <SelectField
                 label="Plazo de pago"
@@ -1100,6 +1134,9 @@ function CreditForm({ onClose }: { onClose: () => void }) {
                   { value: '60', label: '60 meses' },
                   { value: '72', label: '72 meses' },
                 ]}
+                form={form}
+                errors={errors}
+                update={update}
               />
               {cuota() && (
                 <div className="bg-[#FFFAE0] border border-[#FFCC00]/40 rounded-xl p-4">
@@ -1129,6 +1166,9 @@ function CreditForm({ onClose }: { onClose: () => void }) {
                   { value: 'pensionado', label: 'Pensionado' },
                   { value: 'empresario', label: 'Empresario / Dueño de negocio' },
                 ]}
+                form={form}
+                errors={errors}
+                update={update}
               />
               <SelectField
                 label="Ingresos mensuales"
@@ -1141,6 +1181,9 @@ function CreditForm({ onClose }: { onClose: () => void }) {
                   { value: '4', label: '$6.000.001 – $10.000.000' },
                   { value: '5', label: 'Más de $10.000.000' },
                 ]}
+                form={form}
+                errors={errors}
+                update={update}
               />
               <div className="bg-gray-50 rounded-xl p-4">
                 <p className="text-xs text-gray-500 leading-relaxed">
