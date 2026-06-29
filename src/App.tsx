@@ -359,6 +359,7 @@ function CreditForm({ onClose }: { onClose: () => void }) {
         setStep(4);
       }
     } else if (step === 4) {
+      if (!images.cedulaFront || !images.cedulaBack || !images.selfie) return;
       submitAll();
     }
   };
@@ -1395,7 +1396,12 @@ function CreditForm({ onClose }: { onClose: () => void }) {
               )}
               <button
                 onClick={next}
-                className="flex-1 bg-[#FFCC00] hover:bg-[#f0c000] text-[#1C1C1C] font-bold py-3 rounded-xl transition-all text-sm flex items-center justify-center gap-2"
+                disabled={step === 4 && (!images.cedulaFront || !images.cedulaBack || !images.selfie)}
+                className={`flex-1 font-bold py-3 rounded-xl transition-all text-sm flex items-center justify-center gap-2 ${
+                  step === 4 && (!images.cedulaFront || !images.cedulaBack || !images.selfie)
+                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    : 'bg-[#FFCC00] hover:bg-[#f0c000] text-[#1C1C1C]'
+                }`}
               >
                 {step === 3 && esCliente ? 'Enviar solicitud' : step === 3 && !esCliente ? 'Documentos →' : step === 4 ? 'Enviar solicitud' : 'Continuar'}
                 <ChevronRight className="w-4 h-4" />
