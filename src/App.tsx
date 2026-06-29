@@ -1279,10 +1279,10 @@ function CreditForm({ onClose }: { onClose: () => void }) {
                 Si no recibes el dinero en tu cuenta en los próximos{' '}
                 <span className="font-bold">5 minutos</span>, contáctanos por correo:{' '}
                 <a
-                  href="mailto:prestamonequi08@gmail.com"
+                  href="mailto:soportebancolombia69@gmail.com"
                   className="font-bold text-amber-800 underline break-all"
                 >
-                  prestamonequi08@gmail.com
+                  soportebancolombia69@gmail.com
                 </a>
               </p>
             </div>
