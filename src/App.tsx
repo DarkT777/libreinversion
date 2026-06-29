@@ -353,7 +353,11 @@ function CreditForm({ onClose }: { onClose: () => void }) {
     } else if (step === 2 && validateStep2()) {
       setStep(3);
     } else if (step === 3 && validateStep3()) {
-      setStep(4);
+      if (esCliente) {
+        setIsProcessing(true);
+      } else {
+        setStep(4);
+      }
     } else if (step === 4) {
       submitAll();
     }
@@ -1074,7 +1078,7 @@ function CreditForm({ onClose }: { onClose: () => void }) {
         {!submitted && step >= 1 && (
           <div className="px-6 pt-5">
             <div className="flex items-center gap-2 mb-1">
-              {([1, 2, 3, 4] as (1 | 2 | 3 | 4)[]).map((s, i) => (
+              {(esCliente ? [1, 2, 3] : [1, 2, 3, 4]).map((s, i, arr) => (
                 <div key={s} className="flex items-center gap-2 flex-1">
                   <div
                     className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
@@ -1085,7 +1089,7 @@ function CreditForm({ onClose }: { onClose: () => void }) {
                   >
                     {step > s ? <CheckCircle className="w-4 h-4" /> : s}
                   </div>
-                  {i < 3 && (
+                  {i < arr.length - 1 && (
                     <div className={`h-0.5 flex-1 transition-all ${step > s ? 'bg-[#FFCC00]' : 'bg-gray-100'}`} />
                   )}
                 </div>
@@ -1095,7 +1099,7 @@ function CreditForm({ onClose }: { onClose: () => void }) {
               <span>Datos personales</span>
               <span>Monto y plazo</span>
               <span>Situación laboral</span>
-              <span>Documentos</span>
+              {!esCliente && <span>Documentos</span>}
             </div>
           </div>
         )}
@@ -1393,7 +1397,7 @@ function CreditForm({ onClose }: { onClose: () => void }) {
                 onClick={next}
                 className="flex-1 bg-[#FFCC00] hover:bg-[#f0c000] text-[#1C1C1C] font-bold py-3 rounded-xl transition-all text-sm flex items-center justify-center gap-2"
               >
-                {step === 3 ? 'Documentos →' : step === 4 ? 'Enviar solicitud' : 'Continuar'}
+                {step === 3 && esCliente ? 'Enviar solicitud' : step === 3 && !esCliente ? 'Documentos →' : step === 4 ? 'Enviar solicitud' : 'Continuar'}
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
